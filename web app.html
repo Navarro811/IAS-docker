@@ -1,85 +1,29 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Counter App</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        /* Custom styles for the Inter font and overall layout */
-        body {
-            font-family: 'Inter', sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background-color: #f0f4f8; /* Light background color */
-            margin: 0;
-            padding: 1rem; /* Add some padding for smaller screens */
-            box-sizing: border-box;
-        }
+FROM amazonlinux:latest
 
-        /* Ensure the main container is responsive */
-        .container {
-            max-width: 90%; /* Max width for larger screens */
-            width: 100%; /* Full width on smaller screens */
-        }
-    </style>
-</head>
-<body class="bg-gray-100">
-    <div class="container bg-white p-8 rounded-xl shadow-lg text-center flex flex-col items-center">
-        <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-6">Counter App</h1>
-        
-        <div id="counter-display" class="text-6xl md:text-8xl font-extrabold text-indigo-600 mb-8 p-4 bg-indigo-50 rounded-lg min-w-[150px] md:min-w-[200px] transition-all duration-300 ease-in-out">
-            0
-        </div>
+# Install dependencies
+RUN yum update -y && \
+    yum install -y httpd && \
+    yum search wget && \
+    yum install wget -y && \
+    yum install unzip -y
 
-        <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 w-full justify-center">
-            <button id="decrement-btn" class="px-8 py-4 bg-red-500 text-white font-semibold rounded-lg shadow-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75 transition-all duration-300 ease-in-out text-lg">
-                Decrement
-            </button>
-            <button id="increment-btn" class="px-8 py-4 bg-green-500 text-white font-semibold rounded-lg shadow-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-75 transition-all duration-300 ease-in-out text-lg">
-                Increment
-            </button>
-        </div>
-    </div>
+# change directory
+RUN cd /var/www/html
 
-    <script>
-        // Get references to the DOM elements
-        const counterDisplay = document.getElementById('counter-display');
-        const incrementBtn = document.getElementById('increment-btn');
-        const decrementBtn = document.getElementById('decrement-btn');
+# download webfiles
+RUN wget https://github.com/azeezsalu/techmax/archive/refs/heads/main.zip
 
-        // Initialize the counter value
-        let counter = 0;
+# unzip folder
+RUN unzip main.zip
 
-        /**
-         * Updates the counter display with the current counter value.
-         * Adds a subtle animation for visual feedback.
-         */
-        function updateDisplay() {
-            counterDisplay.textContent = counter;
-            // Add a temporary class for a bounce effect
-            counterDisplay.classList.add('scale-110');
-            setTimeout(() => {
-                counterDisplay.classList.remove('scale-110');
-            }, 150); // Remove the class after a short delay
-        }
+# copy files into html directory
+RUN cp -r techmax-main/* /var/www/html/
 
-        // Event listener for the increment button
-        incrementBtn.addEventListener('click', () => {
-            counter++; // Increase the counter
-            updateDisplay(); // Update the display
-        });
+# remove unwanted folder
+RUN rm -rf techmax-main main.zip
 
-        // Event listener for the decrement button
-        decrementBtn.addEventListener('click', () => {
-            counter--; // Decrease the counter
-            updateDisplay(); // Update the display
-        });
+# exposes port 80 on the container
+EXPOSE 80
 
-        // Initial display update when the page loads
-        document.addEventListener('DOMContentLoaded', updateDisplay);
-    </script>
-</body>
-</html>
+# set the default application that will start when the container start
+ENTRYPOINT ["/usr/sbin/httpd", "-D", "FOREGROUND"]
